@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "name": "signal-studio-alan-vo",
+  "owner": "ALANDVO",
+  "email": "alanvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: signal-studio-alan-vo",
+  "workflows": [
+    "Conversational DAG integrity verification and orphan message repair",
+    "Reasoning tag separation and prompt compilation with imitation prevention",
+    "Multi-strategy document parsing and knowledge base chunk retrieval",
+    "User-scoped tool and MCP server header resolution and proxying",
+    "AI/ML reasoning quality and structural integrity benchmark evaluation"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}

@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: signal-studio-backend:1.0.0
+    container_name: signal-studio-backend
+    user: "10001:10001"
+    environment:
+      ENVIRONMENT: development
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      DATABASE_URL: "sqlite:////app/data/signal_studio.db"
+      AUTH_DEMO_MODE: "true"
+      OIDC_ISSUER_URL: "http://keycloak:8080/realms/signal-studio"
+      OIDC_CLIENT_ID: "signal-studio-app"
+      SECRET_KEY: "dev-only-secret-key-replace-in-production"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - studio-data:/app/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: signal-studio-frontend:1.0.0
+    container_name: signal-studio-frontend
+    user: "10001:10001"
+    ports:
+      - "127.0.0.1:3000:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - backend
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: signal-studio-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_password_dev_only
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  studio-data:
+  keycloak-data:
