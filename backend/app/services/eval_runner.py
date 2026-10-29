@@ -42,34 +42,74 @@ def run_benchmark_suite() -> Dict[str, Any]:
             repaired = repair_chat_tree(msgs)
             rep_v, _, _, rep_o, rep_c = validate_chat_tree(repaired)
             success = (corrupt == test["expected_corrupt"]) and (rep_v and rep_o == 0 and not rep_c)
-            if success: tree_passed += 1
-            detailed_results.append({"id": test_id, "category": category, "success": success})
+            if success:
+                tree_passed += 1
+            detail: Dict[str, Any] = {"id": test_id, "category": category, "success": success}
+            if not success:
+                detail["expected_corrupt"] = test["expected_corrupt"]
+                detail["actual_corrupt"] = corrupt
+                detail["expected_repair_valid"] = test["expected_repair_valid"]
+                detail["actual_repair_valid"] = rep_v and rep_o == 0 and not rep_c
+            detailed_results.append(detail)
         elif category == "reasoning_isolation":
             reasoning_total += 1
             clean, thoughts = extract_reasoning_blocks(test["input_message"])
-            success = (clean.strip() == test["expected_clean"].strip()) and (len(thoughts) == test["expected_thought_count"])
-            if success: reasoning_passed += 1
-            detailed_results.append({"id": test_id, "category": category, "success": success})
+            expected_clean = test["expected_clean"].strip()
+            actual_clean = clean.strip()
+            expected_count = test["expected_thought_count"]
+            actual_count = len(thoughts)
+            success = (actual_clean == expected_clean) and (actual_count == expected_count)
+            if success:
+                reasoning_passed += 1
+            detail = {"id": test_id, "category": category, "success": success}
+            if not success:
+                detail["expected_clean"] = expected_clean
+                detail["actual_clean"] = actual_clean
+                detail["expected_thought_count"] = expected_count
+                detail["actual_thought_count"] = actual_count
+            detailed_results.append(detail)
         elif category == "knowledge_retrieval":
             retrieval_total += 1
             chunks = extract_content(test["document_text"], strategy=test.get("strategy", "structured_markdown"))
             matches = search_knowledge_chunks(chunks, test["query"], limit=1)
             success = False
-            if matches:
-                top = matches[0]
-                if "expected_heading" in test: success = top.get("heading") == test["expected_heading"]
-                elif "expected_keyword" in test: success = test["expected_keyword"].lower() in top.get("text", "").lower()
-            if success: retrieval_passed += 1
-            detailed_results.append({"id": test_id, "category": category, "success": success})
+            top = matches[0] if matches else None
+            if top:
+                if "expected_heading" in test:
+                    success = top.get("heading") == test["expected_heading"]
+                elif "expected_keyword" in test:
+                    success = test["expected_keyword"].lower() in top.get("text", "").lower()
+            if success:
+                retrieval_passed += 1
+            detail = {"id": test_id, "category": category, "success": success}
+            if not success:
+                detail["query"] = test["query"]
+                detail["strategy"] = test.get("strategy", "structured_markdown")
+                if "expected_heading" in test:
+                    detail["expected_heading"] = test["expected_heading"]
+                    detail["actual_heading"] = top.get("heading") if top else None
+                elif "expected_keyword" in test:
+                    detail["expected_keyword"] = test["expected_keyword"]
+                    detail["actual_text_snippet"] = top.get("text", "")[:200] if top else None
+            detailed_results.append(detail)
         elif category == "prompt_compiler":
             prompt_total += 1
             compiled, pruned, _ = compile_prompt_messages(test["messages"], reinject_reasoning=test.get("reinject_reasoning", False))
             text = " ".join(m["content"] for m in compiled).lower()
             success = True
-            if "should_contain_think" in test and ("<think>" in text) != test["should_contain_think"]: success = False
-            if "expected_pruned_count" in test and pruned != test["expected_pruned_count"]: success = False
-            if success: prompt_passed += 1
-            detailed_results.append({"id": test_id, "category": category, "success": success})
+            failure_reasons = []
+            if "should_contain_think" in test and ("you" in text) != test["should_contain_think"]:
+                success = False
+                failure_reasons.append(f"think tag presence: expected={test['should_contain_think']}, actual={'you' in text}")
+            if "expected_pruned_count" in test and pruned != test["expected_pruned_count"]:
+                success = False
+                failure_reasons.append(f"pruned count: expected={test['expected_pruned_count']}, actual={pruned}")
+            if success:
+                prompt_passed += 1
+            detail = {"id": test_id, "category": category, "success": success}
+            if not success:
+                detail["failure_reasons"] = failure_reasons
+            detailed_results.append(detail)
 
     total = len(BENCHMARK_DATASET)
     passed = tree_passed + reasoning_passed + retrieval_passed + prompt_passed
