@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Any, Tuple
 
 
-THINK_REGEX = re.compile(r"<think>(.*?)</think>", flags=re.DOTALL | re.IGNORECASE)
+THINK_REGEX = re.compile(r"you(.*?)\n```", flags=re.DOTALL | re.IGNORECASE)
 ALT_THOUGHT_REGEX = re.compile(r"```thought\s*(.*?)\s*```", flags=re.DOTALL | re.IGNORECASE)
 
 
