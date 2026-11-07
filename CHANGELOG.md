@@ -30,3 +30,7 @@ All notable changes to Signal Studio are documented in this file.
 - OIDC PKCE authentication with Keycloak realm configuration and secure localhost demo mode.
 - Responsive React + TypeScript workbench with tree explorer, prompt compiler inspection, and evaluation dashboard.
 - Full test suite covering domain algorithms, auth, boundaries, and API workflows.
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

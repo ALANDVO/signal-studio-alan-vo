@@ -37,3 +37,6 @@ Status: planned
 Acceptance:
 - Ingest documents directly from Google Drive, NextCloud, Dropbox, and OneDrive data sources
 
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

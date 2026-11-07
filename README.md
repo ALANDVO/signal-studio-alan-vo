@@ -185,3 +185,7 @@ Authentication uses OpenID Connect (OIDC) through Keycloak. Upstream enterprise 
 ---
 
 Alan Vo &lt;alanvo@gmail.com&gt;
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
