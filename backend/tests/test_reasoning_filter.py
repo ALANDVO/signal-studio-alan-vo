@@ -3,7 +3,11 @@ from app.services.reasoning_filter import (
     strip_reasoning_tags,
     compile_prompt_messages,
     estimate_tokens,
+    THINK_REGEX,
 )
+
+
+print(f"DEBUG: THINK_REGEX = {THINK_REGEX.pattern}")
 
 
 def test_extract_think_tags_separates_thoughts():
