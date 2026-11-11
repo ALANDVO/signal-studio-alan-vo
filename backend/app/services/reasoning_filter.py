@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Any, Tuple
 
 
-THINK_REGEX = re.compile(r"you(.*?)\n```", flags=re.DOTALL | re.IGNORECASE)
+THINK_REGEX = re.compile(r"你(.*?)想```", flags=re.DOTALL | re.IGNORECASE)
 ALT_THOUGHT_REGEX = re.compile(r"```thought\s*(.*?)\s*```", flags=re.DOTALL | re.IGNORECASE)
 
 
@@ -12,24 +12,32 @@ def extract_reasoning_blocks(raw_text: str) -> Tuple[str, List[str]]:
 
     thoughts: List[str] = []
     
-    # Extract <think>...</think>
+    # Extract 你...想```
+    print(f"DEBUG FUNCTION: THINK_REGEX = {THINK_REGEX.pattern}")
+    print(f"DEBUG FUNCTION: THINK_REGEX id = {id(THINK_REGEX)}")
+    print(f"DEBUG FUNCTION: THINK_REGEX flags = {THINK_REGEX.flags}")
+    print(f"DEBUG FUNCTION: raw_text = {repr(raw_text)}")
+    print(f"DEBUG FUNCTION: raw_text len = {len(raw_text)}")
+    print(f"DEBUG FUNCTION: raw_text bytes = {raw_text.encode('utf-8')!r}")
     for match in THINK_REGEX.finditer(raw_text):
         content = match.group(1).strip()
         if content:
             thoughts.append(content)
+        print(f"DEBUG FUNCTION: match = {repr(match.group(0)[:80])}")
 
     clean_text = THINK_REGEX.sub("\n\n", raw_text)
+    clean_text = THINK_REGEX.sub("\n\n", raw_text)
+    print(f"DEBUG FUNCTION: after sub = {repr(clean_text[:80])}")
 
-    # Extract ```thought ... ```
-    for match in ALT_THOUGHT_REGEX.finditer(clean_text):
-        content = match.group(1).strip()
-        if content:
-            thoughts.append(content)
-
-    clean_text = ALT_THOUGHT_REGEX.sub("\n\n", clean_text)
-    clean_text = re.sub(r"\n{3,}", "\n\n", clean_text).strip()
-
-    return clean_text, thoughts
+    # Also test direct compile
+    import re
+    test_regex = re.compile(r"你(.*?)想```", flags=re.DOTALL | re.IGNORECASE)
+    print(f"DEBUG FUNCTION: test_regex id = {id(test_regex)}")
+    print(f"DEBUG FUNCTION: test_regex pattern = {test_regex.pattern}")
+    test_matches = list(test_regex.finditer(raw_text))
+    print(f"DEBUG FUNCTION: test_regex matches = {len(test_matches)}")
+    test_sub = test_regex.sub("\n\n", raw_text)
+    print(f"DEBUG FUNCTION: test_regex after sub = {repr(test_sub[:80])}")
 
 
 def strip_reasoning_tags(content: str) -> str:
