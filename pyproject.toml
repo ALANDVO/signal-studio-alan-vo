@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signal-studio-alan-vo"
-version = "1.0.0"
+version = "1.5.0"
 description = "Reasoning model workbench featuring conversational DAG validation, thought tag isolation, user-scoped tool credentials, and multi-strategy knowledge retrieval."
 authors = [
     { name = "Alan Vo", email = "alanvo@gmail.com" }
