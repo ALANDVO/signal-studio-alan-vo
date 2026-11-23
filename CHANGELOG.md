@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+- Added `MultimodalProcessor` class in `backend/app/services/multimodal_processor.py`
+  with methods for extracting, processing, and formatting audio/video messages
+- Added `process_multimodal_messages()` for converting messages to LLM-compatible format
+- Added `create_multimodal_prompt()` for generating multimodal prompts with audio/image content
+- Added comprehensive test suite in `backend/tests/test_multimodal_processor.py`
+  with 16 test cases covering audio extraction, video extraction, message processing,
+  and prompt creation
+
+Known issues: None new for this checkpoint.
 ## 1.5.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.

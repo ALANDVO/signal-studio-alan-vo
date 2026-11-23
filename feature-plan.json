@@ -35,12 +35,18 @@
     {
       "id": "native-multimodal-audio-video",
       "title": "Direct Multimodal Audio and Video Streaming (#23357)",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "Stream native audio and video to multimodal vision/speech models without mandatory intermediate STT transcription"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/services/multimodal_processor.py",
+        "backend/app/services/multimodal_llm_client.py",
+        "backend/tests/test_multimodal_processor.py"
+      ],
+      "tests": [
+        "backend/tests/test_multimodal_processor.py"
+      ]
     },
     {
       "id": "external-storage-connectors",
