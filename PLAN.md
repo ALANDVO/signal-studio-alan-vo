@@ -25,10 +25,14 @@ Tests: `backend/tests/test_tree_validator.py`, `backend/tests/test_reasoning_fil
 
 ### native-multimodal-audio-video — Direct Multimodal Audio and Video Streaming (#23357)
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - Stream native audio and video to multimodal vision/speech models without mandatory intermediate STT transcription
+
+Implementation: `backend/app/services/multimodal_processor.py`, `backend/app/services/multimodal_llm_client.py`, `backend/tests/test_multimodal_processor.py`
+
+Tests: `backend/tests/test_multimodal_processor.py`
 
 ### external-storage-connectors — External Cloud Storage Connectors (#5872)
 

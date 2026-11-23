@@ -19,7 +19,7 @@ class AudioSegment:
     format: str  # wav, mp3, opus, etc.
     duration_ms: int
     sample_rate: int
-    channels: int
+    channels: int = 1
     metadata: Dict[str, Any] = None
 
 @dataclass
@@ -175,24 +175,29 @@ class MultimodalProcessor:
             media_type=media_type,
             content=message.get("content"),
             audio_segments=[
-                AudioSegment(
-                    id=f"audio-{i}",
-                    data=message["audio_data"] if isinstance(message.get("audio_data"), bytes) else base64.b64decode(message["audio_data"]),
-                    format=message.get("audio_format", "wav"),
-                    duration_ms=message.get("audio_duration_ms", 0),
-                    sample_rate=message.get("audio_sample_rate", 16000)
-                )
+                *[
+                    AudioSegment(
+                        id=f"audio-{i}",
+                        data=message["audio_data"] if isinstance(message.get("audio_data"), bytes) else base64.b64decode(message["audio_data"]),
+                        format=message.get("audio_format", "wav"),
+                        duration_ms=message.get("audio_duration_ms", 0),
+                        sample_rate=message.get("audio_sample_rate", 16000)
+                    )
+                    for i in range(len(message.get("audio_data", [])) if isinstance(message.get("audio_data"), list) else 1)
+                ]
             ] if has_audio else None,
             video_frames=[
-                VideoFrame(
-                    id=f"frame-{i}",
-                    frame_data=message["video_data"] if isinstance(message.get("video_data"), bytes) else base64.b64decode(message["video_data"]),
-                    width=message.get("video_width", 640),
-                    height=message.get("video_height", 480),
-                    timestamp_ms=i * 1000,
-                    format=message.get("video_format", "jpeg")
-                )
-                for i in range(len(message.get("video_data", [])) if isinstance(message.get("video_data"), list) else 1)
+                *[
+                    VideoFrame(
+                        id=f"frame-{i}",
+                        frame_data=message["video_data"][i] if isinstance(message.get("video_data"), list) else base64.b64decode(message["video_data"]),
+                        width=message.get("video_width", 640),
+                        height=message.get("video_height", 480),
+                        timestamp_ms=i * 1000,
+                        format=message.get("video_format", "jpeg")
+                    )
+                    for i in range(len(message.get("video_data", [])) if isinstance(message.get("video_data"), list) else 1)
+                ]
             ] if has_video else None,
             metadata={
                 "source": message.get("source"),
@@ -210,40 +215,74 @@ class MultimodalProcessor:
     ) -> List[Dict[str, Any]]:
         """Create a multimodal prompt for the given LLM provider"""
         
-        # Extract and process media messages
-        media_messages = []
-        text_messages = []
+        # Convert messages to multimodal format for specific LLM provider
+        processed_messages = []
         
         for msg in messages:
-            media_msg = await self.extract_media_from_message(msg)
-            if media_msg:
-                media_messages.append(media_msg)
-            else:
-                text_messages.append(msg)
-        
-        # Combine text messages with system prompt if present
-        prompt = []
-        if system_prompt:
-            prompt.append({"role": "system", "content": system_prompt})
-        
-        # Add text messages
-        prompt.extend(text_messages)
-        
-        # For certain providers, combine media with text
-        if provider == "openai-compatible" and media_messages:
-            # Merge the first text message with media if possible
-            if prompt:
-                merged_content = []
-                if prompt[0]["role"] == "user":
-                    # Add text content to the prompt
-                    pass  # Keep as-is for now
+            role = msg.get("role", "user")
+            raw_content = msg.get("content", "")
+            
+            # Check if this contains native media data
+            has_media = (
+                msg.get("audio_data") or
+                msg.get("video_data") or
+                msg.get("audio_segments") or
+                msg.get("video_frames")
+            )
+            
+            if has_media:
+                # Create multimodal message for vision/audio models
+                processed_msg = {
+                    "role": role,
+                    "content": [{"type": "text", "text": raw_content}] if raw_content else []
+                }
                 
-                # Add media content to the last message
-                last_msg = prompt[-1]
-                if last_msg["role"] == "user":
-                    last_msg["content"] = last_msg.get("content", "")
+                # Add audio segments if present
+                if msg.get("audio_data"):
+                    audio_data = msg["audio_data"]
+                    if isinstance(audio_data, str):
+                        # Base64 encoded audio
+                        processed_msg["content"].append({
+                            "type": "audio",
+                            "audio": audio_data,
+                            "mime_type": "audio/wav"
+                        })
+                    elif isinstance(audio_data, bytes):
+                        processed_msg["content"].append({
+                            "type": "audio",
+                            "audio": base64.b64encode(audio_data).decode("utf-8"),
+                            "mime_type": "audio/wav"
+                        })
+                
+                # Add video frames if present
+                if msg.get("video_data"):
+                    video_data = msg["video_data"]
+                    if isinstance(video_data, list):
+                        for frame_data in video_data[:3]:  # Limit to first 3 frames
+                            if frame_data:
+                                processed_msg["content"].append({
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{base64.b64encode(frame_data).decode('utf-8')}"
+                                    }
+                                })
+                    elif isinstance(video_data, bytes):
+                        processed_msg["content"].append({
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64.b64encode(video_data).decode('utf-8')}"
+                            }
+                        })
+                
+                processed_messages.append(processed_msg)
+            else:
+                # Regular text message
+                processed_messages.append({
+                    "role": role,
+                    "content": raw_content
+                })
         
-        return prompt
+        return processed_messages
 
 # Singleton instance
 multimodal_processor = MultimodalProcessor()
