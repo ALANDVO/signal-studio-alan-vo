@@ -35,7 +35,7 @@
     {
       "id": "native-multimodal-audio-video",
       "title": "Direct Multimodal Audio and Video Streaming (#23357)",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Stream native audio and video to multimodal vision/speech models without mandatory intermediate STT transcription"
       ],
